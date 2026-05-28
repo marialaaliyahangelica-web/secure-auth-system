@@ -19,33 +19,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $sql = "SELECT password_hash, salt FROM users WHERE username = ?";
     $stmt = $conn->prepare($sql);
+    $stmt->execute([$username]);
 
-    if (!$stmt) {
-        redirectWithMessage('error', 'Database error. Please try again.');
-    }
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $stmt->store_result();
-
-    if ($stmt->num_rows === 1) {
-        $stmt->bind_result($storedHash, $storedSalt);
-        $stmt->fetch();
-
-        $combinedPassword = $password . $storedSalt . PEPPER;
+    if ($user) {
+        $combinedPassword = $password . $user['salt'] . PEPPER;
         $loginHash = hash('sha256', $combinedPassword);
 
-        if (hash_equals($storedHash, $loginHash)) {
+        if (hash_equals($user['password_hash'], $loginHash)) {
             $_SESSION['username'] = $username;
             $_SESSION['login_success'] = 'You have logged in successfully.';
 
-            $stmt->close();
             header("Location: dashboard.php?success=" . rawurlencode("You have logged in successfully."));
             exit();
         }
     }
 
-    $stmt->close();
     redirectWithMessage('error', 'Invalid username or password.');
 }
 

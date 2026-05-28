@@ -38,43 +38,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $checkSql = "SELECT id FROM users WHERE username = ?";
     $stmt = $conn->prepare($checkSql);
+    $stmt->execute([$username]);
 
-    if (!$stmt) {
-        redirectWithMessage('error', 'Database error. Please try again.');
-    }
-
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $stmt->store_result();
-
-    if ($stmt->num_rows > 0) {
-        $stmt->close();
+    if ($stmt->fetch()) {
         redirectWithMessage('error', 'Username already exists.');
     }
 
-    $stmt->close();
-
     $salt = bin2hex(random_bytes(16));
-
     $combinedPassword = $password . $salt . PEPPER;
     $passwordHash = hash('sha256', $combinedPassword);
 
     $insertSql = "INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($insertSql);
+    $stmt->execute([$username, $passwordHash, $salt]);
 
-    if (!$stmt) {
-        redirectWithMessage('error', 'Database error. Please try again.');
-    }
-
-    $stmt->bind_param("sss", $username, $passwordHash, $salt);
-
-    if ($stmt->execute()) {
-        $stmt->close();
-        redirectWithMessage('success', 'Registered successfully! You can now log in.', 'login');
-    } else {
-        $stmt->close();
-        redirectWithMessage('error', 'Registration failed. Please try again.');
-    }
+    redirectWithMessage('success', 'Registered successfully! You can now log in.', 'login');
 }
 
 header("Location: index.php?mode=register");
