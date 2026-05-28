@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $combinedPassword = $password . $salt . PEPPER;
     $passwordHash = hash('sha256', $combinedPassword);
 
-    $insertSql = "INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)";
+    $insertSql = "INSERT INTO users (id, username, password_hash, salt) VALUES (NULL, ?, ?, ?)";
     $stmt = $conn->prepare($insertSql);
     $stmt->execute([$username, $passwordHash, $salt]);
 
