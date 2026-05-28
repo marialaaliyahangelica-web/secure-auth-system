@@ -44,13 +44,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         redirectWithMessage('error', 'Username already exists.');
     }
 
+    $newId = time();
+
     $salt = bin2hex(random_bytes(16));
     $combinedPassword = $password . $salt . PEPPER;
     $passwordHash = hash('sha256', $combinedPassword);
 
-    $insertSql = "INSERT INTO users (id, username, password_hash, salt) VALUES (NULL, ?, ?, ?)";
+    $insertSql = "INSERT INTO users (id, username, password_hash, salt) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($insertSql);
-    $stmt->execute([$username, $passwordHash, $salt]);
+    $stmt->execute([$newId, $username, $passwordHash, $salt]);
 
     redirectWithMessage('success', 'Registered successfully! You can now log in.', 'login');
 }
